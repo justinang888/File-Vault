@@ -1,4 +1,5 @@
-﻿using FileSharingandStorageSystem.Interfaces;
+using System.Diagnostics;
+using FileSharingandStorageSystem.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FileSharingandStorageSystem.Controllers
@@ -16,6 +17,11 @@ namespace FileSharingandStorageSystem.Controllers
         {
             var files = _fileStorageService.GetAllFiles();
             return View(files);
+        }
+
+        public IActionResult Privacy()
+        {
+            return View();
         }
 
         [HttpPost("upload")]
@@ -39,6 +45,13 @@ namespace FileSharingandStorageSystem.Controllers
             if (fileStream == null) return NotFound();
 
             return File(fileStream, "application/octet-stream", fileName);
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            var requestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+            return View(new ErrorViewModel { RequestId = requestId });
         }
     }
 }

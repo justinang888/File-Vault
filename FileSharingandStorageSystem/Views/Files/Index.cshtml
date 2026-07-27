@@ -1,61 +1,123 @@
-﻿@model IEnumerable<FileMetaData>
+@model IEnumerable<FileMetaData>
+@{
+    ViewData["Title"] = "Files";
+    var files = (Model ?? Enumerable.Empty<FileMetaData>()).ToList();
+}
 
-<h1>File Sharing System</h1>
+@functions {
+    static string FormatSize(long bytes)
+    {
+        string[] units = { "B", "KB", "MB", "GB", "TB" };
+        double size = bytes;
+        int unit = 0;
+        while (size >= 1024 && unit < units.Length - 1)
+        {
+            size /= 1024;
+            unit++;
+        }
+        return $"{size:0.#} {units[unit]}";
+    }
 
+    static string Ext(string fileName)
+    {
+        var ext = System.IO.Path.GetExtension(fileName)?.TrimStart('.');
+        return string.IsNullOrEmpty(ext) ? "FILE" : ext.ToUpperInvariant();
+    }
+}
 
+<div class="page-head">
+    <h1>Your files</h1>
+    <p>Upload, store, and share files in one place.</p>
+</div>
 
-<!-- Display success or error messages -->
 @if (TempData["Message"] != null)
 {
-    <div class="alert alert-success">@TempData["Message"]</div>
+    <div class="flash flash--success" role="status">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+        <span>@TempData["Message"]</span>
+    </div>
 }
 @if (TempData["Error"] != null)
 {
-    <div class="alert alert-danger">@TempData["Error"]</div>
+    <div class="flash flash--error" role="alert">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 8v5M12 16h.01" /></svg>
+        <span>@TempData["Error"]</span>
+    </div>
 }
 
-<!-- Upload Form -->
-<form asp-action="Upload" method="post" enctype="multipart/form-data" class="mt-3">
-    <div class="form-group">
-        <label for="file">Upload File:</label>
-        <input type="file" name="file" id="file" class="form-control" />
+<form asp-action="Upload" method="post" enctype="multipart/form-data" class="uploader" id="uploadForm">
+    <label class="dropzone" id="dropzone">
+        <span class="dropzone__icon" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 16V4M7 9l5-5 5 5" /><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+            </svg>
+        </span>
+        <span class="dropzone__title">Drag &amp; drop a file here</span>
+        <span class="dropzone__hint">or click to browse from your device</span>
+        <span class="dropzone__filename" id="fileName">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" /></svg>
+            <span id="fileNameText"></span>
+        </span>
+        <input type="file" name="file" id="file" />
+    </label>
+    <div class="uploader__actions">
+        <button type="submit" class="btn btn--primary" id="uploadBtn" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5" /><path d="M4 20h16" /></svg>
+            Upload
+        </button>
     </div>
-    <button type="submit" class="btn btn-primary mt-2">Upload</button>
 </form>
 
-<!-- File List -->
-<h2 class="mt-4">Uploaded Files</h2>
-@if (Model != null && Model.Any())
-{
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>File Name</th>
-                <th>File Type</th>
-                <th>Size (KB)</th>
-                <th>Uploaded At</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var file in Model)
-            {
+<section class="files">
+    <div class="files__head">
+        <h2>Uploaded files</h2>
+        <span class="files__count">@files.Count @(files.Count == 1 ? "file" : "files")</span>
+    </div>
+
+    @if (files.Any())
+    {
+        <table class="file-table">
+            <thead>
                 <tr>
-                    <td>@file.FileName</td>
-                    <td>@file.FileType</td>
-                    <td>@(file.FileSize / 1024)</td>
-                    <td>@file.UploadedAt.ToString("g")</td>
-                    <td>
-                        <a asp-action="Download" asp-route-fileName="@file.FileName" class="btn btn-success btn-sm">
-                            Download
-                        </a>
-                    </td>
+                    <th>Name</th>
+                    <th class="hide-sm">Type</th>
+                    <th>Size</th>
+                    <th class="hide-sm">Uploaded</th>
+                    <th></th>
                 </tr>
-            }
-        </tbody>
-    </table>
-}
-else
-{
-    <p>No files have been uploaded yet.</p>
-}
+            </thead>
+            <tbody>
+                @foreach (var file in files)
+                {
+                    <tr>
+                        <td>
+                            <div class="file-cell">
+                                <span class="file-chip">@Ext(file.FileName)</span>
+                                <span class="file-name">@file.FileName</span>
+                            </div>
+                        </td>
+                        <td class="hide-sm text-muted-cell">@file.FileType</td>
+                        <td class="text-muted-cell">@FormatSize(file.FileSize)</td>
+                        <td class="hide-sm text-muted-cell">@file.UploadedAt.ToString("MMM d, yyyy")</td>
+                        <td class="actions">
+                            <a asp-action="Download" asp-route-fileName="@file.FileName" class="btn btn--ghost">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M7 11l5 5 5-5" /><path d="M4 20h16" /></svg>
+                                Download
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="empty">
+            <span class="empty__icon" aria-hidden="true">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" /></svg>
+            </span>
+            <span class="empty__title">No files yet</span>
+            <span class="empty__hint">Upload your first file to get started.</span>
+        </div>
+    }
+</section>
