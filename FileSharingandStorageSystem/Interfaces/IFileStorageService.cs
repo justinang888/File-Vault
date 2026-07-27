@@ -1,4 +1,4 @@
-﻿using FileSharingandStorageSystem.Interfaces;
+using FileSharingandStorageSystem.Interfaces;
 using FileSharingandStorageSystem;
 using Microsoft.AspNetCore.StaticFiles;
 
@@ -7,7 +7,7 @@ namespace FileSharingandStorageSystem.Interfaces
     public interface IFileStorageService
     {
         Task StoreFileAsync(IFormFile file);
-        FileStream GetFileStream(string fileName);
+        FileStream? GetFileStream(string fileName);
         IEnumerable<FileMetaData> GetAllFiles();
     }
 
@@ -26,16 +26,28 @@ namespace FileSharingandStorageSystem.Interfaces
 
         public async Task StoreFileAsync(IFormFile file)
         {
-            var filePath = Path.Combine(_storagePath, file.FileName);
+            var safeFileName = Path.GetFileName(file.FileName);
+            if (string.IsNullOrWhiteSpace(safeFileName))
+                throw new ArgumentException("Invalid file name.", nameof(file));
+
+            var filePath = Path.Combine(_storagePath, safeFileName);
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
                 await file.CopyToAsync(stream);
             }
         }
 
-        public FileStream GetFileStream(string fileName)
+        public FileStream? GetFileStream(string fileName)
         {
-            var filePath = Path.Combine(_storagePath, fileName);
+            // Strip any directory components to prevent path traversal.
+            var safeFileName = Path.GetFileName(fileName);
+            if (string.IsNullOrWhiteSpace(safeFileName))
+                return null;
+
+            var filePath = Path.Combine(_storagePath, safeFileName);
+            if (!File.Exists(filePath))
+                return null;
+
             return new FileStream(filePath, FileMode.Open, FileAccess.Read);
         }
 

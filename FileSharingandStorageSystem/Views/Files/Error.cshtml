@@ -1,0 +1,32 @@
+@model ErrorViewModel
+@{
+    ViewData["Title"] = "Error";
+}
+
+<div class="page-head">
+    <h1>Something went wrong</h1>
+    <p>An error occurred while processing your request.</p>
+</div>
+
+<article class="prose">
+    @if (Model.ShowRequestId)
+    {
+        <section class="prose__section">
+            <h2>Request ID</h2>
+            <p><code>@Model.RequestId</code></p>
+        </section>
+    }
+
+    <section class="prose__section">
+        <h2>Development mode</h2>
+        <p>
+            Switching to the Development environment displays detailed information about the error.
+            The Development environment should not be enabled for deployed applications, since it can
+            expose sensitive details from exceptions to end users.
+        </p>
+    </section>
+</article>
+
+<div class="uploader__actions" style="justify-content: flex-start;">
+    <a asp-controller="Files" asp-action="Index" class="btn btn--primary">Back to files</a>
+</div>
