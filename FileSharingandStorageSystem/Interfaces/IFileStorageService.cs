@@ -1,80 +1,93 @@
-using FileSharingandStorageSystem.Interfaces;
 using FileSharingandStorageSystem;
-using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.EntityFrameworkCore;
 
 namespace FileSharingandStorageSystem.Interfaces
 {
     public interface IFileStorageService
     {
-        Task StoreFileAsync(IFormFile file);
-        FileStream? GetFileStream(string fileName);
-        IEnumerable<FileMetaData> GetAllFiles();
+        Task StoreFileAsync(IFormFile file, string ownerId);
+        Task<(FileStream Stream, FileMetaData Meta)?> GetFileAsync(int id, string ownerId);
+        FileMetaData? GetUserFile(int id, string ownerId);
+        IEnumerable<FileMetaData> GetUserFiles(string ownerId);
     }
 
     public class FileStorageService : IFileStorageService
     {
-        private readonly string _storagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
-        private readonly FileExtensionContentTypeProvider _contentTypeProvider;
+        private readonly AppDBContext _db;
+        private readonly string _storagePath;
 
-        public FileStorageService()
+        public FileStorageService(AppDBContext db, IWebHostEnvironment env)
         {
+            _db = db;
+
+            // Store outside wwwroot so files are only reachable through the
+            // authenticated Download action, never as static content.
+            _storagePath = Path.Combine(env.ContentRootPath, "Storage");
             if (!Directory.Exists(_storagePath))
                 Directory.CreateDirectory(_storagePath);
-
-            _contentTypeProvider = new FileExtensionContentTypeProvider();
         }
 
-        public async Task StoreFileAsync(IFormFile file)
+        public async Task StoreFileAsync(IFormFile file, string ownerId)
         {
-            var safeFileName = Path.GetFileName(file.FileName);
-            if (string.IsNullOrWhiteSpace(safeFileName))
+            if (file == null || file.Length == 0)
+                throw new ArgumentException("No file provided.", nameof(file));
+
+            var originalName = Path.GetFileName(file.FileName);
+            if (string.IsNullOrWhiteSpace(originalName))
                 throw new ArgumentException("Invalid file name.", nameof(file));
 
-            var filePath = Path.Combine(_storagePath, safeFileName);
+            var storedName = $"{Guid.NewGuid():N}{Path.GetExtension(originalName)}";
+            var filePath = Path.Combine(_storagePath, storedName);
+
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
                 await file.CopyToAsync(stream);
             }
+
+            var meta = new FileMetaData
+            {
+                FileName = originalName,
+                StoredFileName = storedName,
+                FileType = string.IsNullOrWhiteSpace(file.ContentType)
+                    ? "application/octet-stream"
+                    : file.ContentType,
+                FileSize = file.Length,
+                UploadedAt = DateTime.UtcNow,
+                OwnerId = ownerId
+            };
+
+            _db.FileMetaData.Add(meta);
+            await _db.SaveChangesAsync();
         }
 
-        public FileStream? GetFileStream(string fileName)
+        public async Task<(FileStream Stream, FileMetaData Meta)?> GetFileAsync(int id, string ownerId)
         {
-            // Strip any directory components to prevent path traversal.
-            var safeFileName = Path.GetFileName(fileName);
-            if (string.IsNullOrWhiteSpace(safeFileName))
+            var meta = await _db.FileMetaData
+                .FirstOrDefaultAsync(f => f.Id == id && f.OwnerId == ownerId);
+
+            if (meta == null)
                 return null;
 
-            var filePath = Path.Combine(_storagePath, safeFileName);
+            var filePath = Path.Combine(_storagePath, meta.StoredFileName);
             if (!File.Exists(filePath))
                 return null;
 
-            return new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            return (stream, meta);
         }
 
-        public IEnumerable<FileMetaData> GetAllFiles()
+        public FileMetaData? GetUserFile(int id, string ownerId)
         {
-            return Directory.GetFiles(_storagePath)
-                .Select(filePath =>
-                {
-                    var fileName = Path.GetFileName(filePath);
-                    var contentType = "application/octet-stream";
-
-                    // Get MIME type based on the file extension
-                    if (_contentTypeProvider.TryGetContentType(fileName, out var mimeType))
-                    {
-                        contentType = mimeType;
-                    }
-
-                    return new FileMetaData
-                    {
-                        FileName = fileName,
-                        FileType = contentType,
-                        FileSize = new FileInfo(filePath).Length,
-                        UploadedAt = File.GetCreationTime(filePath)
-                    };
-                });
+            return _db.FileMetaData
+                .FirstOrDefault(f => f.Id == id && f.OwnerId == ownerId);
         }
 
+        public IEnumerable<FileMetaData> GetUserFiles(string ownerId)
+        {
+            return _db.FileMetaData
+                .Where(f => f.OwnerId == ownerId)
+                .OrderByDescending(f => f.UploadedAt)
+                .ToList();
+        }
     }
 }
-

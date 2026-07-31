@@ -1,0 +1,12 @@
+@{
+    ViewData["Title"] = "Link unavailable";
+}
+
+<div class="auth">
+    <h1 class="auth__title">This link isn't available</h1>
+    <p class="auth__subtitle">
+        The share link may have expired, reached its download limit, or been revoked by its owner.
+    </p>
+
+    <a asp-controller="Files" asp-action="Index" class="btn btn--primary auth__submit">Go to FileVault</a>
+</div>

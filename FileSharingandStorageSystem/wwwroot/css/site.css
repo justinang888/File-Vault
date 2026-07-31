@@ -442,6 +442,261 @@ a:hover {
   font-size: 0.9rem;
 }
 
+/* ---------- Auth ---------- */
+.auth {
+  max-width: 400px;
+  margin: 24px auto 0;
+  padding: 32px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+}
+
+.auth__title {
+  margin: 0 0 4px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.auth__subtitle {
+  margin: 0 0 24px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.field {
+  margin-bottom: 16px;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.field input[type="email"],
+.field input[type="password"],
+.field input[type="text"] {
+  width: 100%;
+  padding: 10px 13px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.92rem;
+  transition: border-color 0.18s var(--ease), box-shadow 0.18s var(--ease);
+}
+
+.field input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+
+.field--check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field--check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
+.field--check label {
+  margin: 0;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.field-error {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.8rem;
+  color: var(--danger);
+}
+
+.validation-summary-errors ul {
+  margin: 0 0 16px;
+  padding: 12px 16px 12px 34px;
+  list-style: none;
+  position: relative;
+  background: var(--danger-soft);
+  border: 1px solid oklch(0.82 0.12 27);
+  border-radius: var(--radius-sm);
+  color: oklch(0.44 0.16 27);
+  font-size: 0.85rem;
+}
+
+.validation-summary-errors li {
+  list-style: disc;
+  margin-left: 16px;
+}
+
+.auth__submit {
+  width: 100%;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.auth__alt {
+  margin: 18px 0 0;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ---------- User menu ---------- */
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-menu__email {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.linkbtn {
+  background: none;
+  border: none;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 0.18s var(--ease), color 0.18s var(--ease);
+}
+
+.linkbtn:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+/* ---------- Row actions ---------- */
+.row-actions {
+  display: inline-flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ---------- Share ---------- */
+.share-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+  padding: 20px 22px;
+}
+
+.share-form .field {
+  margin-bottom: 0;
+}
+
+.share-select,
+.share-number {
+  padding: 9px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.9rem;
+  min-width: 160px;
+}
+
+.share-select:focus,
+.share-number:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+
+.share-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.share-item {
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--border);
+}
+
+.share-item:last-child {
+  border-bottom: none;
+}
+
+.share-item--inactive {
+  opacity: 0.6;
+}
+
+.share-item__row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.share-url {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-family: ui-monospace, "Cascadia Code", "Consolas", monospace;
+  font-size: 0.82rem;
+}
+
+.share-item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: 10px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.share-badge {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.share-badge--on {
+  background: var(--success-soft);
+  color: oklch(0.42 0.1 155);
+}
+
+.share-badge--off {
+  background: var(--surface-2);
+  color: var(--text-faint);
+}
+
+.share-copy.is-copied {
+  border-color: var(--success);
+  color: oklch(0.45 0.1 155);
+}
+
 /* ---------- Prose (content pages) ---------- */
 .prose {
   max-width: 68ch;

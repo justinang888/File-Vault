@@ -1,3 +1,6 @@
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,8 +26,23 @@
                 <span class="brand__name">FileVault</span>
             </a>
             <nav class="app-nav">
-                <a class="app-nav__link" asp-controller="Files" asp-action="Index">Files</a>
-                <a class="app-nav__link" asp-controller="Files" asp-action="Privacy">Privacy</a>
+                @if (SignInManager.IsSignedIn(User))
+                {
+                    <a class="app-nav__link" asp-controller="Files" asp-action="Index">Files</a>
+                    <a class="app-nav__link" asp-controller="Files" asp-action="Privacy">Privacy</a>
+                    <div class="user-menu">
+                        <span class="user-menu__email" title="@UserManager.GetUserName(User)">@UserManager.GetUserName(User)</span>
+                        <form asp-controller="Account" asp-action="Logout" method="post">
+                            <button type="submit" class="linkbtn">Sign out</button>
+                        </form>
+                    </div>
+                }
+                else
+                {
+                    <a class="app-nav__link" asp-controller="Files" asp-action="Privacy">Privacy</a>
+                    <a class="app-nav__link" asp-controller="Account" asp-action="Login">Sign in</a>
+                    <a class="app-nav__link" asp-controller="Account" asp-action="Register">Sign up</a>
+                }
             </nav>
         </div>
     </header>

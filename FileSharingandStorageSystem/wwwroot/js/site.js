@@ -40,6 +40,44 @@
         });
     }
 
+    // Copy-to-clipboard for share links.
+    document.querySelectorAll(".share-copy").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            const value = btn.getAttribute("data-copy");
+            if (!value) return;
+
+            const done = function () {
+                const original = btn.textContent;
+                btn.textContent = "Copied";
+                btn.classList.add("is-copied");
+                setTimeout(function () {
+                    btn.textContent = original;
+                    btn.classList.remove("is-copied");
+                }, 1600);
+            };
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(value).then(done).catch(function () {
+                    fallbackCopy(value, done);
+                });
+            } else {
+                fallbackCopy(value, done);
+            }
+        });
+    });
+
+    function fallbackCopy(text, onDone) {
+        const temp = document.createElement("textarea");
+        temp.value = text;
+        temp.style.position = "fixed";
+        temp.style.opacity = "0";
+        document.body.appendChild(temp);
+        temp.select();
+        try { document.execCommand("copy"); } catch (e) { /* no-op */ }
+        document.body.removeChild(temp);
+        onDone();
+    }
+
     // Auto-dismiss flash messages.
     document.querySelectorAll(".flash").forEach(function (flash) {
         setTimeout(function () {

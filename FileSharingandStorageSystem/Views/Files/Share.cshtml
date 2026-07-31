@@ -1,0 +1,99 @@
+@model ManageSharesViewModel
+@{
+    ViewData["Title"] = "Share file";
+    var now = DateTime.UtcNow;
+}
+
+<div class="page-head">
+    <h1>Share &ldquo;@Model.File.FileName&rdquo;</h1>
+    <p>Create expiring links that let anyone download this file, no account required.</p>
+</div>
+
+<p class="auth__alt" style="text-align:left; margin-top:0;">
+    <a asp-controller="Files" asp-action="Index">&larr; Back to files</a>
+</p>
+
+@if (TempData["Message"] != null)
+{
+    <div class="flash flash--success" role="status">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+        <span>@TempData["Message"]</span>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="flash flash--error" role="alert">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 8v5M12 16h.01" /></svg>
+        <span>@TempData["Error"]</span>
+    </div>
+}
+
+<section class="files" style="margin-bottom: 28px;">
+    <div class="files__head">
+        <h2>Create a link</h2>
+    </div>
+    <form asp-controller="Files" asp-action="CreateShare" asp-route-id="@Model.File.Id" method="post" class="share-form">
+        <div class="field">
+            <label for="expiry">Expires</label>
+            <select id="expiry" name="expiry" class="share-select">
+                <option value="1h">In 1 hour</option>
+                <option value="1d">In 1 day</option>
+                <option value="7d" selected>In 7 days</option>
+                <option value="30d">In 30 days</option>
+                <option value="never">Never</option>
+            </select>
+        </div>
+        <div class="field">
+            <label for="maxDownloads">Download limit (optional)</label>
+            <input type="number" id="maxDownloads" name="maxDownloads" min="1" placeholder="Unlimited" class="share-number" />
+        </div>
+        <button type="submit" class="btn btn--primary">Create link</button>
+    </form>
+</section>
+
+<section class="files">
+    <div class="files__head">
+        <h2>Active links</h2>
+        <span class="files__count">@Model.Shares.Count() total</span>
+    </div>
+
+    @if (Model.Shares.Any())
+    {
+        <ul class="share-list">
+            @foreach (var share in Model.Shares)
+            {
+                var active = share.IsActive(now);
+                var url = Url.Action("Shared", "Files", new { token = share.Token }, Context.Request.Scheme)!;
+                <li class="share-item @(active ? "" : "share-item--inactive")">
+                    <div class="share-item__row">
+                        <input type="text" class="share-url" value="@url" readonly aria-label="Share link" />
+                        <button type="button" class="btn btn--ghost share-copy" data-copy="@url">Copy</button>
+                        <form asp-controller="Files" asp-action="RevokeShare" asp-route-id="@Model.File.Id" method="post">
+                            <input type="hidden" name="shareId" value="@share.Id" />
+                            <button type="submit" class="btn btn--ghost share-revoke" @(share.IsRevoked ? "disabled" : "")>Revoke</button>
+                        </form>
+                    </div>
+                    <div class="share-item__meta">
+                        @if (!active)
+                        {
+                            <span class="share-badge share-badge--off">@(share.IsRevoked ? "Revoked" : (share.ExpiresAt.HasValue && share.ExpiresAt <= now ? "Expired" : "Limit reached"))</span>
+                        }
+                        else
+                        {
+                            <span class="share-badge share-badge--on">Active</span>
+                        }
+                        <span>@(share.ExpiresAt.HasValue ? $"Expires {share.ExpiresAt.Value.ToLocalTime():MMM d, yyyy h:mm tt}" : "No expiry")</span>
+                        <span>@share.DownloadCount@(share.MaxDownloads.HasValue ? $" / {share.MaxDownloads}" : "") downloads</span>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        <div class="empty">
+            <span class="empty__title">No links yet</span>
+            <span class="empty__hint">Create a link above to share this file.</span>
+        </div>
+    }
+</section>

@@ -100,10 +100,16 @@
                         <td class="text-muted-cell">@FormatSize(file.FileSize)</td>
                         <td class="hide-sm text-muted-cell">@file.UploadedAt.ToString("MMM d, yyyy")</td>
                         <td class="actions">
-                            <a asp-action="Download" asp-route-fileName="@file.FileName" class="btn btn--ghost">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M7 11l5 5 5-5" /><path d="M4 20h16" /></svg>
-                                Download
-                            </a>
+                            <div class="row-actions">
+                                <a asp-action="Share" asp-route-id="@file.Id" class="btn btn--ghost">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" /></svg>
+                                    Share
+                                </a>
+                                <a asp-action="Download" asp-route-id="@file.Id" class="btn btn--ghost">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M7 11l5 5 5-5" /><path d="M4 20h16" /></svg>
+                                    Download
+                                </a>
+                            </div>
                         </td>
                     </tr>
                 }
