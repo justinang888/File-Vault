@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# User-uploaded file storage (runtime data, should not be committed)
+FileSharingandStorageSystem/Storage/
