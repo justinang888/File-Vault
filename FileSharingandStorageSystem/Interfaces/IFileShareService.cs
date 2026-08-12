@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using FileSharingandStorageSystem;
+using FileSharingandStorageSystem.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace FileSharingandStorageSystem.Interfaces
@@ -9,18 +10,18 @@ namespace FileSharingandStorageSystem.Interfaces
         Task<FileShare?> CreateShareAsync(int fileId, string ownerId, TimeSpan? lifetime, int? maxDownloads);
         Task<IEnumerable<FileShare>> GetSharesForFileAsync(int fileId, string ownerId);
         Task<bool> RevokeShareAsync(int shareId, string ownerId);
-        Task<(FileStream Stream, FileMetaData Meta)?> GetSharedFileAsync(string token);
+        Task<(Stream Stream, FileMetaData Meta)?> GetSharedFileAsync(string token);
     }
 
     public class FileShareService : IFileShareService
     {
         private readonly AppDBContext _db;
-        private readonly string _storagePath;
+        private readonly IObjectStorage _storage;
 
-        public FileShareService(AppDBContext db, IWebHostEnvironment env)
+        public FileShareService(AppDBContext db, IObjectStorage storage)
         {
             _db = db;
-            _storagePath = Path.Combine(env.ContentRootPath, "Storage");
+            _storage = storage;
         }
 
         public async Task<FileShare?> CreateShareAsync(int fileId, string ownerId, TimeSpan? lifetime, int? maxDownloads)
@@ -74,7 +75,7 @@ namespace FileSharingandStorageSystem.Interfaces
             return true;
         }
 
-        public async Task<(FileStream Stream, FileMetaData Meta)?> GetSharedFileAsync(string token)
+        public async Task<(Stream Stream, FileMetaData Meta)?> GetSharedFileAsync(string token)
         {
             var share = await _db.FileShares
                 .Include(s => s.File)
@@ -83,14 +84,13 @@ namespace FileSharingandStorageSystem.Interfaces
             if (share == null || share.File == null || !share.IsActive(DateTime.UtcNow))
                 return null;
 
-            var filePath = Path.Combine(_storagePath, share.File.StoredFileName);
-            if (!File.Exists(filePath))
+            var stream = await _storage.OpenReadAsync(share.File.StoredFileName);
+            if (stream == null)
                 return null;
 
             share.DownloadCount++;
             await _db.SaveChangesAsync();
 
-            var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
             return (stream, share.File);
         }
 
