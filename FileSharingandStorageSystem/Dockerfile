@@ -15,6 +15,9 @@ COPY --from=build /app/publish .
 
 # Hosts like Render/Fly route to the port in $PORT; bind Kestrel to it (default 8080).
 ENV ASPNETCORE_URLS=http://+:8080
+# Don't watch appsettings.json for changes at runtime; file watchers (inotify)
+# are scarce in small containers and reloading config in production isn't needed.
+ENV DOTNET_hostBuilder__reloadConfigOnChange=false
 EXPOSE 8080
 
 ENTRYPOINT ["dotnet", "FileSharingandStorageSystem.dll"]

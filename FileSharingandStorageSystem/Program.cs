@@ -11,7 +11,14 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
+// Razor runtime compilation watches every .cshtml file via inotify, which is a
+// dev-only convenience. Enabling it in a small container (e.g. Render) exhausts
+// the inotify instance limit and crashes startup, so restrict it to Development.
+var mvcBuilder = builder.Services.AddControllersWithViews();
+if (builder.Environment.IsDevelopment())
+{
+    mvcBuilder.AddRazorRuntimeCompilation();
+}
 
 // Behind a TLS-terminating proxy (Render, Fly.io, Nginx), honor X-Forwarded-*
 // so HTTPS redirection and cookie security see the original client scheme
