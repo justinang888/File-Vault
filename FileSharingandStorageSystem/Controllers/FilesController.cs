@@ -103,6 +103,25 @@ namespace FileSharingandStorageSystem.Controllers
             return RedirectToAction("Share", new { id });
         }
 
+        [HttpGet("files/share/{id:int}/status")]
+        public async Task<IActionResult> ShareStatus(int id)
+        {
+            var userId = _userManager.GetUserId(User)!;
+            var shares = await _fileShareService.GetSharesForFileAsync(id, userId);
+            var now = DateTime.UtcNow;
+
+            var data = shares.Select(s => new
+            {
+                id = s.Id,
+                active = s.IsActive(now),
+                statusText = s.StatusText(now),
+                downloadCount = s.DownloadCount,
+                maxDownloads = s.MaxDownloads
+            });
+
+            return Json(data);
+        }
+
         [HttpPost("files/share/{id:int}/revoke")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RevokeShare(int id, int shareId)

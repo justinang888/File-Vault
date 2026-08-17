@@ -59,12 +59,12 @@
 
     @if (Model.Shares.Any())
     {
-        <ul class="share-list">
+        <ul class="share-list" data-share-status-url="@Url.Action("ShareStatus", "Files", new { id = Model.File.Id })">
             @foreach (var share in Model.Shares)
             {
                 var active = share.IsActive(now);
                 var url = Url.Action("Shared", "Files", new { token = share.Token }, Context.Request.Scheme)!;
-                <li class="share-item @(active ? "" : "share-item--inactive")">
+                <li class="share-item @(active ? "" : "share-item--inactive")" data-share-id="@share.Id">
                     <div class="share-item__row">
                         <input type="text" class="share-url" value="@url" readonly aria-label="Share link" />
                         <button type="button" class="btn btn--ghost share-copy" data-copy="@url">Copy</button>
@@ -74,16 +74,9 @@
                         </form>
                     </div>
                     <div class="share-item__meta">
-                        @if (!active)
-                        {
-                            <span class="share-badge share-badge--off">@(share.IsRevoked ? "Revoked" : (share.ExpiresAt.HasValue && share.ExpiresAt <= now ? "Expired" : "Limit reached"))</span>
-                        }
-                        else
-                        {
-                            <span class="share-badge share-badge--on">Active</span>
-                        }
+                        <span class="share-badge @(active ? "share-badge--on" : "share-badge--off")" data-role="status">@share.StatusText(now)</span>
                         <span>@(share.ExpiresAt.HasValue ? $"Expires {share.ExpiresAt.Value.ToLocalTime():MMM d, yyyy h:mm tt}" : "No expiry")</span>
-                        <span>@share.DownloadCount@(share.MaxDownloads.HasValue ? $" / {share.MaxDownloads}" : "") downloads</span>
+                        <span data-role="downloads">@share.DownloadCount@(share.MaxDownloads.HasValue ? $" / {share.MaxDownloads}" : "") downloads</span>
                     </div>
                 </li>
             }

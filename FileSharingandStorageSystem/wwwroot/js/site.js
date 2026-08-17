@@ -87,4 +87,64 @@
             setTimeout(function () { flash.remove(); }, 400);
         }, 4000);
     });
+
+    // Live-update share download counts / status on the manage-shares page.
+    const shareList = document.querySelector(".share-list[data-share-status-url]");
+    if (shareList) {
+        const statusUrl = shareList.getAttribute("data-share-status-url");
+
+        const downloadsText = function (share) {
+            const limit = share.maxDownloads != null ? " / " + share.maxDownloads : "";
+            return share.downloadCount + limit + " downloads";
+        };
+
+        const applyStatus = function (shares) {
+            if (!Array.isArray(shares)) return;
+            shares.forEach(function (share) {
+                const item = shareList.querySelector('[data-share-id="' + share.id + '"]');
+                if (!item) return;
+
+                const downloads = item.querySelector('[data-role="downloads"]');
+                if (downloads) downloads.textContent = downloadsText(share);
+
+                const badge = item.querySelector('[data-role="status"]');
+                if (badge) {
+                    badge.textContent = share.statusText;
+                    badge.classList.toggle("share-badge--on", share.active);
+                    badge.classList.toggle("share-badge--off", !share.active);
+                }
+
+                item.classList.toggle("share-item--inactive", !share.active);
+            });
+        };
+
+        const poll = function () {
+            fetch(statusUrl, { headers: { "Accept": "application/json" } })
+                .then(function (res) { return res.ok ? res.json() : null; })
+                .then(applyStatus)
+                .catch(function () { /* transient error; try again next tick */ });
+        };
+
+        // Only poll while the tab is visible; pause in the background to avoid
+        // needless requests, and refresh immediately when the user returns.
+        let timer = null;
+        const start = function () {
+            if (timer === null) {
+                poll();
+                timer = setInterval(poll, 5000);
+            }
+        };
+        const stop = function () {
+            if (timer !== null) {
+                clearInterval(timer);
+                timer = null;
+            }
+        };
+
+        document.addEventListener("visibilitychange", function () {
+            if (document.hidden) stop(); else start();
+        });
+
+        if (!document.hidden) start();
+    }
 })();

@@ -32,5 +32,15 @@ namespace FileSharingandStorageSystem
             if (MaxDownloads.HasValue && DownloadCount >= MaxDownloads.Value) return false;
             return true;
         }
+
+        // Human-readable status shown on the manage-shares page. Kept here so the
+        // server-rendered view and the live-status JSON endpoint stay in sync.
+        public string StatusText(DateTime nowUtc)
+        {
+            if (IsActive(nowUtc)) return "Active";
+            if (IsRevoked) return "Revoked";
+            if (ExpiresAt.HasValue && ExpiresAt.Value <= nowUtc) return "Expired";
+            return "Limit reached";
+        }
     }
 }
