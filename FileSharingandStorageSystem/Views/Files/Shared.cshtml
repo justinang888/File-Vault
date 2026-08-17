@@ -1,0 +1,68 @@
+@model SharedFileViewModel
+@{
+    ViewData["Title"] = "Download file";
+    var now = DateTime.UtcNow;
+}
+
+@functions {
+    static string FormatSize(long bytes)
+    {
+        string[] units = { "B", "KB", "MB", "GB", "TB" };
+        double size = bytes;
+        int unit = 0;
+        while (size >= 1024 && unit < units.Length - 1)
+        {
+            size /= 1024;
+            unit++;
+        }
+        return $"{size:0.#} {units[unit]}";
+    }
+
+    static string Ext(string fileName)
+    {
+        var ext = System.IO.Path.GetExtension(fileName)?.TrimStart('.');
+        return string.IsNullOrEmpty(ext) ? "FILE" : ext.ToUpperInvariant();
+    }
+}
+
+<div class="auth">
+    <h1 class="auth__title">Someone shared a file with you</h1>
+    <p class="auth__subtitle">Review the details below, then confirm to download.</p>
+
+    <div class="share-preview">
+        <div class="share-preview__file">
+            <span class="file-chip">@Ext(Model.FileName)</span>
+            <span class="file-name">@Model.FileName</span>
+        </div>
+        <dl class="share-preview__meta">
+            <div>
+                <dt>Size</dt>
+                <dd>@FormatSize(Model.FileSize)</dd>
+            </div>
+            <div>
+                <dt>Type</dt>
+                <dd>@(string.IsNullOrWhiteSpace(Model.FileType) ? "Unknown" : Model.FileType)</dd>
+            </div>
+            <div>
+                <dt>Expires</dt>
+                <dd>@(Model.ExpiresAt.HasValue ? Model.ExpiresAt.Value.ToLocalTime().ToString("MMM d, yyyy h:mm tt") : "Never")</dd>
+            </div>
+            @if (Model.DownloadsRemaining.HasValue)
+            {
+                <div>
+                    <dt>Downloads left</dt>
+                    <dd>@Model.DownloadsRemaining</dd>
+                </div>
+            }
+        </dl>
+    </div>
+
+    <form asp-action="DownloadShared" asp-route-token="@Model.Token" method="post">
+        <button type="submit" class="btn btn--primary auth__submit">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M7 11l5 5 5-5" /><path d="M4 20h16" /></svg>
+            Download file
+        </button>
+    </form>
+
+    <p class="auth__alt">Only download files from people you trust.</p>
+</div>

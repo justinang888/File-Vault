@@ -553,6 +553,52 @@ a:hover {
   color: var(--text-muted);
 }
 
+/* ---------- Shared download confirmation ---------- */
+.share-preview {
+  margin: 22px 0 24px;
+  padding: 18px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.share-preview__file {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.share-preview__meta {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px 20px;
+  margin: 0;
+}
+
+.share-preview__meta div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.share-preview__meta dt {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-faint);
+}
+
+.share-preview__meta dd {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text);
+  word-break: break-word;
+}
+
 /* ---------- User menu ---------- */
 .user-menu {
   display: flex;

@@ -117,6 +117,26 @@ namespace FileSharingandStorageSystem.Controllers
         [HttpGet("s/{token}")]
         public async Task<IActionResult> Shared(string token)
         {
+            var share = await _fileShareService.GetShareInfoAsync(token);
+            if (share?.File == null)
+                return View("ShareUnavailable");
+
+            return View(new SharedFileViewModel
+            {
+                Token = token,
+                FileName = share.File.FileName,
+                FileSize = share.File.FileSize,
+                FileType = share.File.FileType,
+                ExpiresAt = share.ExpiresAt,
+                DownloadCount = share.DownloadCount,
+                MaxDownloads = share.MaxDownloads
+            });
+        }
+
+        [AllowAnonymous]
+        [HttpPost("s/{token}/download")]
+        public async Task<IActionResult> DownloadShared(string token)
+        {
             var result = await _fileShareService.GetSharedFileAsync(token);
             if (result == null)
                 return View("ShareUnavailable");

@@ -10,6 +10,7 @@ namespace FileSharingandStorageSystem.Interfaces
         Task<FileShare?> CreateShareAsync(int fileId, string ownerId, TimeSpan? lifetime, int? maxDownloads);
         Task<IEnumerable<FileShare>> GetSharesForFileAsync(int fileId, string ownerId);
         Task<bool> RevokeShareAsync(int shareId, string ownerId);
+        Task<FileShare?> GetShareInfoAsync(string token);
         Task<(Stream Stream, FileMetaData Meta)?> GetSharedFileAsync(string token);
     }
 
@@ -73,6 +74,20 @@ namespace FileSharingandStorageSystem.Interfaces
             share.IsRevoked = true;
             await _db.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<FileShare?> GetShareInfoAsync(string token)
+        {
+            // Read-only lookup for the confirmation page: does not open a stream or
+            // increment the download count, so viewing the page doesn't consume a download.
+            var share = await _db.FileShares
+                .Include(s => s.File)
+                .FirstOrDefaultAsync(s => s.Token == token);
+
+            if (share == null || share.File == null || !share.IsActive(DateTime.UtcNow))
+                return null;
+
+            return share;
         }
 
         public async Task<(Stream Stream, FileMetaData Meta)?> GetSharedFileAsync(string token)
