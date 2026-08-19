@@ -27,7 +27,31 @@
 
 <div class="auth">
     <h1 class="auth__title">Someone shared a file with you</h1>
-    <p class="auth__subtitle">Review the details below, then confirm to download.</p>
+    <p class="auth__subtitle">
+        @(Model.CanEdit
+            ? "You have editor access: download, rename, or replace this file."
+            : "Review the details below, then confirm to download.")
+    </p>
+
+    <div class="access-note">
+        <span class="share-badge @(Model.CanEdit ? "share-badge--role" : "share-badge--on")">@(Model.CanEdit ? "Editor" : "Viewer")</span>
+        <span>@(Model.CanEdit ? "You can manage this file." : "You can view and download this file.")</span>
+    </div>
+
+    @if (TempData["Message"] != null)
+    {
+        <div class="flash flash--success" role="status">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+            <span>@TempData["Message"]</span>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="flash flash--error" role="alert">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 8v5M12 16h.01" /></svg>
+            <span>@TempData["Error"]</span>
+        </div>
+    }
 
     <div class="share-preview">
         <div class="share-preview__file">
@@ -63,6 +87,27 @@
             Download file
         </button>
     </form>
+
+    @if (Model.CanEdit)
+    {
+        <div class="editor-actions">
+            <h2 class="editor-actions__title">Manage this file</h2>
+
+            <form asp-action="SharedRename" asp-route-token="@Model.Token" method="post" class="editor-actions__row">
+                <input type="text" name="newName" value="@Model.FileName" aria-label="New file name" class="share-url" required />
+                <button type="submit" class="btn btn--ghost">Rename</button>
+            </form>
+
+            <form asp-action="SharedReplace" asp-route-token="@Model.Token" method="post" enctype="multipart/form-data" class="editor-actions__row">
+                <input type="file" name="file" aria-label="Replacement file" required />
+                <button type="submit" class="btn btn--ghost">Replace</button>
+            </form>
+
+            <form asp-action="SharedRevoke" asp-route-token="@Model.Token" method="post" onsubmit="return confirm('Revoke this link? It will stop working for everyone.');">
+                <button type="submit" class="btn btn--ghost share-revoke">Revoke link</button>
+            </form>
+        </div>
+    }
 
     <p class="auth__alt">Only download files from people you trust.</p>
 </div>

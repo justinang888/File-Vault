@@ -47,6 +47,13 @@
             <label for="maxDownloads">Download limit (optional)</label>
             <input type="number" id="maxDownloads" name="maxDownloads" min="1" placeholder="Unlimited" class="share-number" />
         </div>
+        <div class="field">
+            <label for="permission">Access level</label>
+            <select id="permission" name="permission" class="share-select">
+                <option value="viewer" selected>Viewer &mdash; view &amp; download</option>
+                <option value="editor">Editor &mdash; download, rename, replace, revoke</option>
+            </select>
+        </div>
         <button type="submit" class="btn btn--primary">Create link</button>
     </form>
 </section>
@@ -75,6 +82,7 @@
                     </div>
                     <div class="share-item__meta">
                         <span class="share-badge @(active ? "share-badge--on" : "share-badge--off")" data-role="status">@share.StatusText(now)</span>
+                        <span class="share-badge share-badge--role">@(share.Permission == SharePermission.Editor ? "Editor" : "Viewer")</span>
                         <span>@(share.ExpiresAt.HasValue ? $"Expires {share.ExpiresAt.Value.ToLocalTime():MMM d, yyyy h:mm tt}" : "No expiry")</span>
                         <span data-role="downloads">@share.DownloadCount@(share.MaxDownloads.HasValue ? $" / {share.MaxDownloads}" : "") downloads</span>
                     </div>

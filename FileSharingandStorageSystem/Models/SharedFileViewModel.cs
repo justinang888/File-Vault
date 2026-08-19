@@ -11,6 +11,10 @@ namespace FileSharingandStorageSystem.Models
         public DateTime? ExpiresAt { get; set; }
         public int DownloadCount { get; set; }
         public int? MaxDownloads { get; set; }
+        public SharePermission Permission { get; set; }
+
+        // True when this link grants management (Editor) rights.
+        public bool CanEdit => Permission == SharePermission.Editor;
 
         public int? DownloadsRemaining =>
             MaxDownloads.HasValue ? Math.Max(0, MaxDownloads.Value - DownloadCount) : null;

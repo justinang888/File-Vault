@@ -1,11 +1,25 @@
 namespace FileSharingandStorageSystem
 {
+    // What a logged-in recipient of a share link is allowed to do.
+    public enum SharePermission
+    {
+        // Can view details and download the file.
+        Viewer = 0,
+
+        // Everything a Viewer can do, plus manage the file: rename, replace
+        // (re-upload a new version), and revoke the link.
+        Editor = 1
+    }
+
     public class FileShare
     {
         public int Id { get; set; }
 
         // Unguessable URL-safe token that identifies this share link.
         public string Token { get; set; } = string.Empty;
+
+        // Access level granted to whoever opens this link (while logged in).
+        public SharePermission Permission { get; set; } = SharePermission.Viewer;
 
         public int FileMetaDataId { get; set; }
         public FileMetaData? File { get; set; }
@@ -42,5 +56,8 @@ namespace FileSharingandStorageSystem
             if (ExpiresAt.HasValue && ExpiresAt.Value <= nowUtc) return "Expired";
             return "Limit reached";
         }
+
+        // True when this link grants management (edit) rights and is still usable.
+        public bool CanEdit(DateTime nowUtc) => Permission == SharePermission.Editor && IsActive(nowUtc);
     }
 }

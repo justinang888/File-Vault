@@ -77,7 +77,7 @@ namespace FileSharingandStorageSystem.Controllers
 
         [HttpPost("files/share/{id:int}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateShare(int id, string expiry, int? maxDownloads)
+        public async Task<IActionResult> CreateShare(int id, string expiry, int? maxDownloads, string? permission)
         {
             var userId = _userManager.GetUserId(User)!;
 
@@ -92,7 +92,11 @@ namespace FileSharingandStorageSystem.Controllers
 
             var limit = maxDownloads.HasValue && maxDownloads.Value > 0 ? maxDownloads : null;
 
-            var share = await _fileShareService.CreateShareAsync(id, userId, lifetime, limit);
+            var access = string.Equals(permission, "editor", StringComparison.OrdinalIgnoreCase)
+                ? SharePermission.Editor
+                : SharePermission.Viewer;
+
+            var share = await _fileShareService.CreateShareAsync(id, userId, lifetime, limit, access);
             if (share == null)
             {
                 TempData["Error"] = "Could not create a share link for that file.";
@@ -101,6 +105,42 @@ namespace FileSharingandStorageSystem.Controllers
 
             TempData["Message"] = "Share link created.";
             return RedirectToAction("Share", new { id });
+        }
+
+        [HttpPost("files/{id:int}/delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var userId = _userManager.GetUserId(User)!;
+            var ok = await _fileStorageService.DeleteFileAsync(id, userId);
+            TempData[ok ? "Message" : "Error"] = ok ? "File deleted." : "Could not delete that file.";
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost("files/{id:int}/rename")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Rename(int id, string newName)
+        {
+            var userId = _userManager.GetUserId(User)!;
+            var ok = await _fileStorageService.RenameFileAsync(id, userId, newName);
+            TempData[ok ? "Message" : "Error"] = ok ? "File renamed." : "Could not rename that file.";
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost("files/{id:int}/replace")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Replace(int id, IFormFile file)
+        {
+            var userId = _userManager.GetUserId(User)!;
+            if (file == null || file.Length == 0)
+            {
+                TempData["Error"] = "Please choose a file to upload.";
+                return RedirectToAction("Index");
+            }
+
+            var ok = await _fileStorageService.ReplaceFileAsync(id, userId, file);
+            TempData[ok ? "Message" : "Error"] = ok ? "File replaced." : "Could not replace that file.";
+            return RedirectToAction("Index");
         }
 
         [HttpGet("files/share/{id:int}/status")]
@@ -132,7 +172,8 @@ namespace FileSharingandStorageSystem.Controllers
             return RedirectToAction("Share", new { id });
         }
 
-        [AllowAnonymous]
+        // Share links now require the recipient to be logged in. Anonymous visitors
+        // are redirected to the login page (and back) by the cookie middleware.
         [HttpGet("s/{token}")]
         public async Task<IActionResult> Shared(string token)
         {
@@ -148,12 +189,13 @@ namespace FileSharingandStorageSystem.Controllers
                 FileType = share.File.FileType,
                 ExpiresAt = share.ExpiresAt,
                 DownloadCount = share.DownloadCount,
-                MaxDownloads = share.MaxDownloads
+                MaxDownloads = share.MaxDownloads,
+                Permission = share.Permission
             });
         }
 
-        [AllowAnonymous]
         [HttpPost("s/{token}/download")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> DownloadShared(string token)
         {
             var result = await _fileShareService.GetSharedFileAsync(token);
@@ -162,6 +204,45 @@ namespace FileSharingandStorageSystem.Controllers
 
             var (stream, meta) = result.Value;
             return File(stream, "application/octet-stream", meta.FileName);
+        }
+
+        [HttpPost("s/{token}/rename")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SharedRename(string token, string newName)
+        {
+            var ok = await _fileShareService.RenameViaShareAsync(token, newName);
+            TempData[ok ? "Message" : "Error"] = ok ? "File renamed." : "You don't have permission to rename this file.";
+            return RedirectToAction("Shared", new { token });
+        }
+
+        [HttpPost("s/{token}/replace")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SharedReplace(string token, IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                TempData["Error"] = "Please choose a file to upload.";
+                return RedirectToAction("Shared", new { token });
+            }
+
+            var ok = await _fileShareService.ReplaceViaShareAsync(token, file);
+            TempData[ok ? "Message" : "Error"] = ok ? "File replaced." : "You don't have permission to replace this file.";
+            return RedirectToAction("Shared", new { token });
+        }
+
+        [HttpPost("s/{token}/revoke")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SharedRevoke(string token)
+        {
+            var ok = await _fileShareService.RevokeViaShareAsync(token);
+            if (ok)
+            {
+                TempData["Message"] = "Share link revoked.";
+                return View("ShareUnavailable");
+            }
+
+            TempData["Error"] = "You don't have permission to revoke this link.";
+            return RedirectToAction("Shared", new { token });
         }
 
         [AllowAnonymous]

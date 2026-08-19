@@ -109,6 +109,22 @@
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M7 11l5 5 5-5" /><path d="M4 20h16" /></svg>
                                     Download
                                 </a>
+                                <details class="row-more">
+                                    <summary class="btn btn--ghost">More</summary>
+                                    <div class="row-more__menu">
+                                        <form asp-action="Rename" asp-route-id="@file.Id" method="post" class="row-more__form">
+                                            <input type="text" name="newName" value="@file.FileName" aria-label="New file name" required />
+                                            <button type="submit" class="btn btn--ghost">Rename</button>
+                                        </form>
+                                        <form asp-action="Replace" asp-route-id="@file.Id" method="post" enctype="multipart/form-data" class="row-more__form">
+                                            <input type="file" name="file" aria-label="Replacement file" required />
+                                            <button type="submit" class="btn btn--ghost">Replace</button>
+                                        </form>
+                                        <form asp-action="Delete" asp-route-id="@file.Id" method="post" onsubmit="return confirm('Delete &quot;@file.FileName&quot;? This also removes its share links and cannot be undone.');">
+                                            <button type="submit" class="btn btn--ghost row-more__delete">Delete file</button>
+                                        </form>
+                                    </div>
+                                </details>
                             </div>
                         </td>
                     </tr>
