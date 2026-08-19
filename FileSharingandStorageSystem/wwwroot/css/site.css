@@ -316,7 +316,9 @@ a:hover {
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow-sm);
-  overflow: hidden;
+  /* Not "hidden" so the row "More" dropdown can overflow the card without being
+     clipped; the last row re-rounds its own corners below to keep the shape. */
+  overflow: visible;
 }
 
 .files__head {
@@ -366,6 +368,14 @@ a:hover {
 
 .file-table tr:last-child td {
   border-bottom: none;
+}
+
+.file-table tr:last-child td:first-child {
+  border-bottom-left-radius: var(--radius);
+}
+
+.file-table tr:last-child td:last-child {
+  border-bottom-right-radius: var(--radius);
 }
 
 .file-table tbody tr {
