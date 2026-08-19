@@ -1,14 +1,20 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace FileSharingandStorageSystem
 {
-    public class AppDBContext : IdentityDbContext<ApplicationUser>
+    public class AppDBContext : IdentityDbContext<ApplicationUser>, IDataProtectionKeyContext
     {
         public AppDBContext(DbContextOptions<AppDBContext> options) : base(options) { }
 
         public DbSet<FileMetaData> FileMetaData { get; set; }
         public DbSet<FileShare> FileShares { get; set; }
+
+        // Backing store for ASP.NET Data Protection keys so they persist across
+        // restarts/redeploys and are shared across instances (keeps auth cookies
+        // and antiforgery tokens valid instead of being regenerated each boot).
+        public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

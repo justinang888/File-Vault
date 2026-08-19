@@ -4,6 +4,7 @@ using FileSharingandStorageSystem;
 using FileSharingandStorageSystem.Interfaces;
 using FileSharingandStorageSystem.Models;
 using FileSharingandStorageSystem.Services;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -65,6 +66,13 @@ builder.Services.AddDbContext<AppDBContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
+
+// Persist Data Protection keys in the database (via AppDBContext) with a stable
+// application name, so auth cookies and antiforgery tokens survive redeploys and
+// work across multiple instances instead of breaking on every restart.
+builder.Services.AddDataProtection()
+    .PersistKeysToDbContext<AppDBContext>()
+    .SetApplicationName("FileVault");
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
